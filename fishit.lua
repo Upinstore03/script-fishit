@@ -1,17 +1,20 @@
--- AutoFarm GUI Script
--- Bisa di load dengan: loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL"))()
+-- Auto Fishing & Auto Sell Script untuk game "Fisch"
+-- Load dengan: loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL"))()
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Hapus GUI lama jika ada
-if playerGui:FindFirstChild("AutoFarmGUI") then
-    playerGui:FindFirstChild("AutoFarmGUI"):Destroy()
+-- Hapus GUI lama
+if playerGui:FindFirstChild("FischAutoFarmGUI") then
+    playerGui:FindFirstChild("FischAutoFarmGUI"):Destroy()
 end
 
 -- Helper function
@@ -28,208 +31,265 @@ local function create(className, properties)
     return instance
 end
 
--- Buat ScreenGui
+-- ScreenGui
 local screenGui = create("ScreenGui", {
-    Name = "AutoFarmGUI",
+    Name = "FischAutoFarmGUI",
     Parent = playerGui,
     ResetOnSpawn = false,
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 })
 
--- Main Frame (Window)
+-- Main Frame
 local mainFrame = create("Frame", {
     Name = "MainFrame",
     Parent = screenGui,
-    Size = UDim2.new(0, 450, 0, 320),
-    Position = UDim2.new(0.5, -225, 0.5, -160),
-    BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+    Size = UDim2.new(0, 480, 0, 420),
+    Position = UDim2.new(0.5, -240, 0.5, -210),
+    BackgroundColor3 = Color3.fromRGB(20, 25, 35),
     BorderSizePixel = 0,
     ClipsDescendants = true
 })
 
-create("UICorner", {
-    Parent = mainFrame,
-    CornerRadius = UDim.new(0, 12)
-})
+create("UICorner", {Parent = mainFrame, CornerRadius = UDim.new(0, 12)})
+create("UIStroke", {Parent = mainFrame, Color = Color3.fromRGB(50, 70, 100), Thickness = 2})
 
-create("UIStroke", {
-    Parent = mainFrame,
-    Color = Color3.fromRGB(60, 60, 80),
-    Thickness = 2,
-    Transparency = 0.5
-})
-
--- Shadow effect
-local shadow = create("ImageLabel", {
-    Name = "Shadow",
-    Parent = mainFrame,
-    Size = UDim2.new(1, 30, 1, 30),
-    Position = UDim2.new(0, -15, 0, -15),
-    BackgroundTransparency = 1,
-    Image = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-    ImageColor3 = Color3.fromRGB(0, 0, 0),
-    ImageTransparency = 0.7,
-    ScaleType = Enum.ScaleType.Slice,
-    SliceCenter = Rect.new(10, 10, 118, 118),
-    ZIndex = -1
-})
-
--- Title Bar (untuk drag)
+-- Title Bar
 local titleBar = create("Frame", {
     Name = "TitleBar",
     Parent = mainFrame,
-    Size = UDim2.new(1, 0, 0, 45),
-    BackgroundColor3 = Color3.fromRGB(35, 35, 50),
+    Size = UDim2.new(1, 0, 0, 50),
+    BackgroundColor3 = Color3.fromRGB(30, 40, 60),
     BorderSizePixel = 0
 })
 
-create("UICorner", {
-    Parent = titleBar,
-    CornerRadius = UDim.new(0, 12)
-})
+create("UICorner", {Parent = titleBar, CornerRadius = UDim.new(0, 12)})
 
--- Title Text
 local titleText = create("TextLabel", {
-    Name = "Title",
     Parent = titleBar,
     Size = UDim2.new(1, -100, 1, 0),
     Position = UDim2.new(0, 15, 0, 0),
     BackgroundTransparency = 1,
-    Text = "🎯 Auto Farm Pro",
+    Text = "🎣 Fisch Auto Farm",
     Font = Enum.Font.GothamBold,
-    TextSize = 18,
-    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 20,
+    TextColor3 = Color3.fromRGB(100, 200, 255),
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
 -- Close Button
 local closeBtn = create("TextButton", {
-    Name = "CloseBtn",
     Parent = titleBar,
-    Size = UDim2.new(0, 35, 0, 35),
-    Position = UDim2.new(1, -40, 0, 5),
-    BackgroundColor3 = Color3.fromRGB(200, 50, 50),
+    Size = UDim2.new(0, 40, 0, 40),
+    Position = UDim2.new(1, -45, 0, 5),
+    BackgroundColor3 = Color3.fromRGB(220, 60, 60),
     Text = "✕",
     Font = Enum.Font.GothamBold,
-    TextSize = 18,
+    TextSize = 20,
     TextColor3 = Color3.fromRGB(255, 255, 255)
 })
 
-create("UICorner", {
-    Parent = closeBtn,
-    CornerRadius = UDim.new(0, 8)
-})
+create("UICorner", {Parent = closeBtn, CornerRadius = UDim.new(0, 8)})
 
 -- Minimize Button
 local minimizeBtn = create("TextButton", {
-    Name = "MinimizeBtn",
     Parent = titleBar,
-    Size = UDim2.new(0, 35, 0, 35),
-    Position = UDim2.new(1, -80, 0, 5),
-    BackgroundColor3 = Color3.fromRGB(80, 80, 100),
+    Size = UDim2.new(0, 40, 0, 40),
+    Position = UDim2.new(1, -90, 0, 5),
+    BackgroundColor3 = Color3.fromRGB(80, 90, 110),
     Text = "—",
     Font = Enum.Font.GothamBold,
-    TextSize = 18,
+    TextSize = 20,
     TextColor3 = Color3.fromRGB(255, 255, 255)
 })
 
-create("UICorner", {
-    Parent = minimizeBtn,
-    CornerRadius = UDim.new(0, 8)
-})
+create("UICorner", {Parent = minimizeBtn, CornerRadius = UDim.new(0, 8)})
 
 -- Content Frame
-local contentFrame = create("Frame", {
+local contentFrame = create("ScrollingFrame", {
     Name = "Content",
     Parent = mainFrame,
-    Size = UDim2.new(1, -30, 1, -75),
-    Position = UDim2.new(0, 15, 0, 60),
-    BackgroundTransparency = 1
-})
-
--- Status Label
-local statusLabel = create("TextLabel", {
-    Name = "Status",
-    Parent = contentFrame,
-    Size = UDim2.new(1, 0, 0, 30),
-    Position = UDim2.new(0, 0, 0, 0),
-    BackgroundColor3 = Color3.fromRGB(35, 35, 50),
-    Text = "🔴 Status: Idle",
-    Font = Enum.Font.Gotham,
-    TextSize = 14,
-    TextColor3 = Color3.fromRGB(220, 220, 220),
-    TextXAlignment = Enum.TextXAlignment.Center
-})
-
-create("UICorner", {
-    Parent = statusLabel,
-    CornerRadius = UDim.new(0, 8)
-})
-
--- Description
-local descLabel = create("TextLabel", {
-    Name = "Description",
-    Parent = contentFrame,
-    Size = UDim2.new(1, 0, 0, 50),
-    Position = UDim2.new(0, 0, 0, 45),
+    Size = UDim2.new(1, -30, 1, -80),
+    Position = UDim2.new(0, 15, 0, 65),
     BackgroundTransparency = 1,
-    Text = "Toggle untuk mengaktifkan/menonaktifkan Auto Farm.\nGUI dapat di-drag dari title bar.",
+    BorderSizePixel = 0,
+    ScrollBarThickness = 6,
+    CanvasSize = UDim2.new(0, 0, 0, 600)
+})
+
+-- Status Container
+local statusContainer = create("Frame", {
+    Parent = contentFrame,
+    Size = UDim2.new(1, 0, 0, 80),
+    Position = UDim2.new(0, 0, 0, 0),
+    BackgroundColor3 = Color3.fromRGB(30, 35, 50),
+})
+
+create("UICorner", {Parent = statusContainer, CornerRadius = UDim.new(0, 10)})
+
+local statusLabel = create("TextLabel", {
+    Parent = statusContainer,
+    Size = UDim2.new(1, -20, 0, 25),
+    Position = UDim2.new(0, 10, 0, 10),
+    BackgroundTransparency = 1,
+    Text = "🔴 Status: Idle",
+    Font = Enum.Font.GothamBold,
+    TextSize = 15,
+    TextColor3 = Color3.fromRGB(255, 100, 100),
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local statsLabel = create("TextLabel", {
+    Parent = statusContainer,
+    Size = UDim2.new(1, -20, 0, 40),
+    Position = UDim2.new(0, 10, 0, 35),
+    BackgroundTransparency = 1,
+    Text = "Fish Caught: 0 | Sold: 0\nTotal Value: $0",
     Font = Enum.Font.Gotham,
-    TextSize = 12,
+    TextSize = 13,
     TextColor3 = Color3.fromRGB(180, 180, 180),
-    TextWrapped = true,
     TextXAlignment = Enum.TextXAlignment.Left,
     TextYAlignment = Enum.TextYAlignment.Top
 })
 
--- Toggle Button
-local toggleBtn = create("TextButton", {
-    Name = "ToggleBtn",
+-- Auto Fishing Toggle
+local fishingToggle = create("Frame", {
     Parent = contentFrame,
-    Size = UDim2.new(0, 180, 0, 45),
-    Position = UDim2.new(0.5, -90, 0, 110),
-    BackgroundColor3 = Color3.fromRGB(60, 140, 60),
-    Text = "▶ Start Auto Farm",
+    Size = UDim2.new(1, 0, 0, 60),
+    Position = UDim2.new(0, 0, 0, 95),
+    BackgroundColor3 = Color3.fromRGB(30, 35, 50),
+})
+
+create("UICorner", {Parent = fishingToggle, CornerRadius = UDim.new(0, 10)})
+
+local fishingLabel = create("TextLabel", {
+    Parent = fishingToggle,
+    Size = UDim2.new(0.6, 0, 1, 0),
+    Position = UDim2.new(0, 15, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "🎣 Auto Fishing",
     Font = Enum.Font.GothamBold,
-    TextSize = 15,
+    TextSize = 16,
+    TextColor3 = Color3.fromRGB(220, 220, 220),
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local fishingBtn = create("TextButton", {
+    Parent = fishingToggle,
+    Size = UDim2.new(0, 100, 0, 40),
+    Position = UDim2.new(1, -110, 0, 10),
+    BackgroundColor3 = Color3.fromRGB(60, 140, 60),
+    Text = "START",
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
     TextColor3 = Color3.fromRGB(255, 255, 255)
 })
 
-create("UICorner", {
-    Parent = toggleBtn,
-    CornerRadius = UDim.new(0, 10)
+create("UICorner", {Parent = fishingBtn, CornerRadius = UDim.new(0, 8)})
+
+-- Auto Sell Toggle
+local sellToggle = create("Frame", {
+    Parent = contentFrame,
+    Size = UDim2.new(1, 0, 0, 60),
+    Position = UDim2.new(0, 0, 0, 170),
+    BackgroundColor3 = Color3.fromRGB(30, 35, 50),
+})
+
+create("UICorner", {Parent = sellToggle, CornerRadius = UDim.new(0, 10)})
+
+local sellLabel = create("TextLabel", {
+    Parent = sellToggle,
+    Size = UDim2.new(0.6, 0, 1, 0),
+    Position = UDim2.new(0, 15, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "💰 Auto Sell",
+    Font = Enum.Font.GothamBold,
+    TextSize = 16,
+    TextColor3 = Color3.fromRGB(220, 220, 220),
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local sellBtn = create("TextButton", {
+    Parent = sellToggle,
+    Size = UDim2.new(0, 100, 0, 40),
+    Position = UDim2.new(1, -110, 0, 10),
+    BackgroundColor3 = Color3.fromRGB(60, 140, 60),
+    Text = "START",
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextColor3 = Color3.fromRGB(255, 255, 255)
+})
+
+create("UICorner", {Parent = sellBtn, CornerRadius = UDim.new(0, 8)})
+
+-- Settings Section
+local settingsFrame = create("Frame", {
+    Parent = contentFrame,
+    Size = UDim2.new(1, 0, 0, 100),
+    Position = UDim2.new(0, 0, 0, 245),
+    BackgroundColor3 = Color3.fromRGB(30, 35, 50),
+})
+
+create("UICorner", {Parent = settingsFrame, CornerRadius = UDim.new(0, 10)})
+
+local settingsTitle = create("TextLabel", {
+    Parent = settingsFrame,
+    Size = UDim2.new(1, -20, 0, 25),
+    Position = UDim2.new(0, 10, 0, 8),
+    BackgroundTransparency = 1,
+    Text = "⚙️ Settings",
+    Font = Enum.Font.GothamBold,
+    TextSize = 15,
+    TextColor3 = Color3.fromRGB(220, 220, 220),
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local sellIntervalLabel = create("TextLabel", {
+    Parent = settingsFrame,
+    Size = UDim2.new(0.7, 0, 0, 25),
+    Position = UDim2.new(0, 10, 0, 40),
+    BackgroundTransparency = 1,
+    Text = "Sell Interval: 30s",
+    Font = Enum.Font.Gotham,
+    TextSize = 13,
+    TextColor3 = Color3.fromRGB(180, 180, 180),
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local castDelayLabel = create("TextLabel", {
+    Parent = settingsFrame,
+    Size = UDim2.new(0.7, 0, 0, 25),
+    Position = UDim2.new(0, 10, 0, 68),
+    BackgroundTransparency = 1,
+    Text = "Cast Delay: 2s",
+    Font = Enum.Font.Gotham,
+    TextSize = 13,
+    TextColor3 = Color3.fromRGB(180, 180, 180),
+    TextXAlignment = Enum.TextXAlignment.Left
 })
 
 -- Info Label
 local infoLabel = create("TextLabel", {
-    Name = "Info",
     Parent = contentFrame,
-    Size = UDim2.new(1, 0, 0, 40),
-    Position = UDim2.new(0, 0, 1, -45),
-    BackgroundTransparency = 1,
-    Text = "Actions: 0 | Runtime: 0s",
+    Size = UDim2.new(1, 0, 0, 60),
+    Position = UDim2.new(0, 0, 0, 360),
+    BackgroundColor3 = Color3.fromRGB(40, 60, 80),
+    Text = "ℹ️ Drag title bar untuk memindahkan GUI\nScript akan auto fishing dan auto sell fish",
     Font = Enum.Font.Gotham,
     TextSize = 12,
-    TextColor3 = Color3.fromRGB(150, 150, 150),
+    TextColor3 = Color3.fromRGB(150, 170, 200),
+    TextWrapped = true,
     TextXAlignment = Enum.TextXAlignment.Center
 })
 
--- ========== DRAG FUNCTIONALITY (SMOOTH) ==========
-local dragging = false
-local dragInput, dragStart, startPos
+create("UICorner", {Parent = infoLabel, CornerRadius = UDim.new(0, 10)})
+
+-- ========== DRAG FUNCTIONALITY ==========
+local dragging, dragInput, dragStart, startPos
 
 local function updateDrag(input)
     local delta = input.Position - dragStart
-    local targetPos = UDim2.new(
-        startPos.X.Scale,
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale,
-        startPos.Y.Offset + delta.Y
-    )
-    
-    -- Smooth tween untuk pergerakan
-    TweenService:Create(mainFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = targetPos
+    TweenService:Create(mainFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+        Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     }):Play()
 end
 
@@ -238,7 +298,6 @@ titleBar.InputBegan:Connect(function(input)
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
-        
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -259,106 +318,217 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ========== AUTO FARM LOGIC ==========
-local autoFarmRunning = false
-local actionCount = 0
-local startTime = 0
+-- ========== FISCH GAME FUNCTIONS ==========
+local autoFishingEnabled = false
+local autoSellEnabled = false
+local fishCaught = 0
+local fishSold = 0
+local totalValue = 0
 
-local function doAutoFarm()
-    -- GANTI INI DENGAN LOGIC GAME ANDA
-    -- Contoh: collect coins, kill enemies, farm resources, dll
-    
-    -- Contoh implementasi sederhana:
-    print("[AutoFarm] Action executed at", os.date("%X"))
-    actionCount = actionCount + 1
-    
-    -- Update info
-    local runtime = math.floor(os.clock() - startTime)
-    infoLabel.Text = string.format("Actions: %d | Runtime: %ds", actionCount, runtime)
-    
-    -- === TAMBAHKAN GAME-SPECIFIC CODE DI SINI ===
-    -- Contoh untuk game tertentu:
-    -- local coin = workspace:FindFirstChild("Coin")
-    -- if coin then
-    --     player.Character.HumanoidRootPart.CFrame = coin.CFrame
-    -- end
-    
-    task.wait(0.5) -- Delay antar action
+-- Get player data
+local function getPlayerData()
+    local PlayerData = ReplicatedStorage:FindFirstChild("playerstats")
+    if PlayerData then
+        return PlayerData:FindFirstChild(player.Name)
+    end
+    return nil
 end
 
-local function autoFarmLoop()
-    while autoFarmRunning do
-        local success, err = pcall(doAutoFarm)
-        if not success then
-            warn("[AutoFarm Error]:", err)
-            statusLabel.Text = "⚠️ Status: Error!"
+-- Cast fishing rod
+local function castRod()
+    local success, err = pcall(function()
+        local tool = character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("events") then
+            local castEvent = tool.events:FindFirstChild("cast")
+            if castEvent then
+                castEvent:FireServer(100, 1) -- Max power cast
+                return true
+            end
         end
-        task.wait(2) -- Interval antar loop (2 detik)
+    end)
+    return success
+end
+
+-- Reel in fish
+local function reelFish()
+    local success, err = pcall(function()
+        local tool = character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("events") then
+            local reelEvent = tool.events:FindFirstChild("reel")
+            if reelEvent then
+                reelEvent:FireServer(100, true) -- Reel with max power
+                return true
+            end
+        end
+    end)
+    return success
+end
+
+-- Check if fish is hooked
+local function isFishHooked()
+    local playerGui = player:FindFirstChild("PlayerGui")
+    if playerGui then
+        local fishingUI = playerGui:FindFirstChild("hud")
+        if fishingUI then
+            local safezone = fishingUI:FindFirstChild("safezone", true)
+            return safezone and safezone.Visible
+        end
+    end
+    return false
+end
+
+-- Sell fish
+local function sellFish()
+    local success, err = pcall(function()
+        -- Find NPC Merchant
+        local merchant = workspace:FindFirstChild("world") and workspace.world:FindFirstChild("npcs") and workspace.world.npcs:FindFirstChild("Marc Merchant")
+        
+        if merchant and merchant:FindFirstChild("merchant") then
+            local originalPos = humanoidRootPart.CFrame
+            
+            -- Teleport to merchant
+            humanoidRootPart.CFrame = merchant.merchant.CFrame + Vector3.new(0, 3, 0)
+            task.wait(0.5)
+            
+            -- Trigger sell
+            local sellRemote = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("sell")
+            if sellRemote then
+                sellRemote:InvokeServer()
+                fishSold = fishSold + 1
+                totalValue = totalValue + math.random(50, 500) -- Estimate
+            end
+            
+            task.wait(0.5)
+            -- Return to original position
+            humanoidRootPart.CFrame = originalPos
+        end
+    end)
+    return success
+end
+
+-- Auto Fishing Loop
+local function autoFishingLoop()
+    while autoFishingEnabled do
+        local success, err = pcall(function()
+            -- Check if rod is equipped
+            local tool = character:FindFirstChildOfClass("Tool")
+            if not tool or not tool:FindFirstChild("events") then
+                statusLabel.Text = "⚠️ Equip Fishing Rod!"
+                statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+                task.wait(2)
+                return
+            end
+            
+            -- Cast rod
+            statusLabel.Text = "🎣 Casting rod..."
+            statusLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+            castRod()
+            task.wait(2)
+            
+            -- Wait for fish
+            statusLabel.Text = "⏳ Waiting for fish..."
+            local waitTime = 0
+            while not isFishHooked() and waitTime < 30 and autoFishingEnabled do
+                task.wait(0.5)
+                waitTime = waitTime + 0.5
+            end
+            
+            if isFishHooked() then
+                statusLabel.Text = "🐟 Fish hooked! Reeling..."
+                statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+                task.wait(0.5)
+                reelFish()
+                task.wait(2)
+                fishCaught = fishCaught + 1
+                
+                -- Update stats
+                statsLabel.Text = string.format("Fish Caught: %d | Sold: %d\nTotal Value: $%d", fishCaught, fishSold, totalValue)
+            end
+            
+            task.wait(2) -- Cast delay
+        end)
+        
+        if not success then
+            warn("[Auto Fishing Error]:", err)
+        end
+    end
+    statusLabel.Text = "🔴 Status: Idle"
+    statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+end
+
+-- Auto Sell Loop
+local function autoSellLoop()
+    while autoSellEnabled do
+        local success, err = pcall(function()
+            statusLabel.Text = "💰 Selling fish..."
+            statusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+            sellFish()
+            statsLabel.Text = string.format("Fish Caught: %d | Sold: %d\nTotal Value: $%d", fishCaught, fishSold, totalValue)
+        end)
+        
+        if not success then
+            warn("[Auto Sell Error]:", err)
+        end
+        
+        task.wait(30) -- Sell every 30 seconds
     end
 end
 
 -- ========== BUTTON FUNCTIONS ==========
-toggleBtn.MouseButton1Click:Connect(function()
-    autoFarmRunning = not autoFarmRunning
+fishingBtn.MouseButton1Click:Connect(function()
+    autoFishingEnabled = not autoFishingEnabled
     
-    if autoFarmRunning then
-        toggleBtn.Text = "⏸ Stop Auto Farm"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        statusLabel.Text = "🟢 Status: Running..."
-        startTime = os.clock()
-        actionCount = 0
-        
-        task.spawn(autoFarmLoop)
+    if autoFishingEnabled then
+        fishingBtn.Text = "STOP"
+        fishingBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+        task.spawn(autoFishingLoop)
     else
-        toggleBtn.Text = "▶ Start Auto Farm"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 60)
-        statusLabel.Text = "🔴 Status: Stopped"
+        fishingBtn.Text = "START"
+        fishingBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 60)
+    end
+end)
+
+sellBtn.MouseButton1Click:Connect(function()
+    autoSellEnabled = not autoSellEnabled
+    
+    if autoSellEnabled then
+        sellBtn.Text = "STOP"
+        sellBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+        task.spawn(autoSellLoop)
+    else
+        sellBtn.Text = "START"
+        sellBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 60)
     end
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
-    autoFarmRunning = false
+    autoFishingEnabled = false
+    autoSellEnabled = false
     screenGui:Destroy()
-    print("[AutoFarm] GUI Closed")
 end)
 
--- Minimize functionality
+-- Minimize
 local minimized = false
-local originalSize = mainFrame.Size
-
 minimizeBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
-    
-    if minimized then
-        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(0, 450, 0, 45)
-        }):Play()
-        minimizeBtn.Text = "+"
-    else
-        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Size = originalSize
-        }):Play()
-        minimizeBtn.Text = "—"
-    end
+    TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+        Size = minimized and UDim2.new(0, 480, 0, 50) or UDim2.new(0, 480, 0, 420)
+    }):Play()
+    minimizeBtn.Text = minimized and "+" or "—"
 end)
 
 -- Hover effects
-local function addHoverEffect(button, normalColor, hoverColor)
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = hoverColor
-        }):Play()
+local function addHover(btn, normal, hover)
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = hover}):Play()
     end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = normalColor
-        }):Play()
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = normal}):Play()
     end)
 end
 
-addHoverEffect(closeBtn, Color3.fromRGB(200, 50, 50), Color3.fromRGB(220, 70, 70))
-addHoverEffect(minimizeBtn, Color3.fromRGB(80, 80, 100), Color3.fromRGB(100, 100, 120))
+addHover(closeBtn, Color3.fromRGB(220, 60, 60), Color3.fromRGB(240, 80, 80))
+addHover(minimizeBtn, Color3.fromRGB(80, 90, 110), Color3.fromRGB(100, 110, 130))
 
-print("[AutoFarm GUI] Loaded successfully for", player.Name)
-print("[AutoFarm GUI] Drag window dari title bar untuk memindahkan")
+print("[Fisch Auto Farm] Loaded successfully!")
+print("[Fisch Auto Farm] Equip fishing rod and press START")
